@@ -39,6 +39,26 @@ const Catalog = () => {
     };
 
     fetchAgents();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('agents-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'agents'
+        },
+        () => {
+          fetchAgents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (

@@ -99,7 +99,30 @@ const AgentDetail = () => {
       }
     };
 
-    if (id) initializeData();
+    if (id) {
+      initializeData();
+
+      // Subscribe to real-time updates for this specific agent
+      const channel = supabase
+        .channel(`agent-${id}-changes`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'agents',
+            filter: `id=eq.${id}`
+          },
+          () => {
+            initializeData();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [id]);
 
   const updateAgentData = async (field: string, value: any) => {
